@@ -1,0 +1,6 @@
+[project]
+name = "PPTX-Render"
+authors = [{ name = "leoxing", email = "xingzhening@pjlab.org.cn" }]
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = ["pywin32", "fastapi", "uvicorn", "python-multipart", "pillow", "httpx"]
