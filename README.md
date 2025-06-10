@@ -24,28 +24,57 @@ python .\src\pptx_render\main.py  # use "\" for windows
 2. Request the PPTX file from the remote server:
 
    ```python
-    import requests
-    from PIL import Image
+    import base64
+    import os.path as osp
+    import time
     from io import BytesIO
 
-    def pptx_to_image(url, file_path):
-        with open(file_path, "rb") as f:
-            files = {"files": (file_path, f)}
-            response = requests.post(url, files=files)
-
-        if response.status_code != 200:
-            print(response.json())
-            raise Exception(f"Request failed with status code {response.status_code}")
-
-        image_stream = BytesIO(response.content)
-        img = Image.open(image_stream)
-        img.save('test_rendered.png')  # Save the image for verification
+    import requests
+    from PIL import Image
 
 
+    def pptx_to_image(url, file_list, max_batch_size: int = 8):
+        files = []
+        for file_path in file_list:
+            filename = osp.basename(file_path)
+            with open(file_path, "rb") as f:
+                files.append(
+                    (
+                        "files",
+                        (filename, f.read(), "application/vnd.openxmlformats-officedocument.presentationml.presentation"),
+                    )
+                )
+
+        for s_idx in range(0, len(files), max_batch_size):
+            e_idx = min(s_idx + max_batch_size, len(files))
+            batch_files = files[s_idx:e_idx]
+            response = requests.post(url, files=batch_files)
+            results = response.json()
+            for result in results:
+                idx = result["idx"]
+                img_bytes = result["bytes"]
+                error = result["error"]
+
+                if img_bytes is not None:
+                    image_stream = base64.b64decode(img_bytes)
+                    img = Image.open(BytesIO(image_stream))
+                    img.save(f"test_rendered_{s_idx + idx}.png")  # Save the image for verification
+                else:
+                    print(f"Error processing file {idx}: {error}")
+
+            print(f'Processed files from index {s_idx} to {e_idx - 1}')
+
+
+    file_template = "autosid/output/cv-v1-7b-small/{idx}_label.pptx"
+    index_list = [idx for idx in range(32) if idx not in [14, 25]]
+    file_list = [file_template.format(idx=idx) for idx in index_list]
+    s_time = time.time()
     pptx_to_image(
-        url='http://localhost:14514/render',
-        file_path='autosid/output/cv-v1-3b/0_label.pptx'
+        url="http://localhost:14514/render",
+        file_list=file_list,
     )
+
+    print("Total time taken:", time.time() - s_time)
    ```
 
     Then you should see the rendered image saved as `test_rendered.png`.
