@@ -11,7 +11,7 @@ python .\src\pptx_render\main.py  # use "\" for windows
 1. Start a reverse proxy on your local machine, for example:
 
    ```bash
-   ssh -p 30176 -R 0.0.0.0:14514:localhost:14514 xingzhening@47.100.57.163 -i C:\Users\xingzhening\.ssh\ali
+   ssh -p 749 -R 0.0.0.0:14515:localhost:14515 root@8.130.84.63 -i C:\Users\xingzhening\.ssh\ali
    ```
 
     * `-p 30176` is the port for remote server (e.g., your DSW)
@@ -78,3 +78,10 @@ python .\src\pptx_render\main.py  # use "\" for windows
    ```
 
     Then you should see the rendered image saved as `test_rendered.png`.
+
+## Client (run on local)
+
+```bash
+
+python .\render.py --gen-dir .\cv-v1-vis\  --save-dir .\cv-v1-vis-render --max-samples -1 
+```
